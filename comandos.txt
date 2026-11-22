@@ -29,3 +29,20 @@ npm install -D allure-commandline
 npm test
 npm run report:generate
 npm run report:open
+
+
+docker compose up -d
+docker compose ps
+docker compose down
+docker compose down -v
+
+
+curl -s http://localhost:9966/petclinic/api/owners
+
+http://localhost:8080/petclinic/
+http://localhost:9966/petclinic/swagger-ui/index.html
+http://localhost:9966/petclinic/api
+
+
+npx playwright codegen [url]
+npx playwright codegen http://localhost:8080
