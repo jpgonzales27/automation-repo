@@ -15,7 +15,7 @@
     "test:api": "playwright test tests/api",
     "test:all": "playwright test tests/ui tests/api",
     "test:db": "playwright test tests/api/owners-db-validation.spec.ts",
-    "ci:test": "cd .. && docker compose -f docker-compose.yml -f docker-compose.ci.yml up --build --exit-code-from framework"
+    "ci:test": "cd docker && docker compose -f docker-compose.yml -f docker-compose.ci.yml up --build --exit-code-from framework"
   },
   "keywords": [],
   "author": "",

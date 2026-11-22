@@ -1,4 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
+
+// Carga las variables de entorno desde el archivo .env.{TEST_ENV}
 import "./src/config/env";
 
 /**

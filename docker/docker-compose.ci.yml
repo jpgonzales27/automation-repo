@@ -1,0 +1,7 @@
+# Override para CI: se combina con docker-compose.yml
+#   docker compose -f docker-compose.yml -f docker-compose.ci.yml up --build --exit-code-from framework
+# Solo declara lo que cambia respecto al archivo base.
+services:
+  framework:
+    environment:
+      CI: "true"
