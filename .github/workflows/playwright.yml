@@ -1,27 +1,96 @@
-name: Playwright Tests
+# Nombre del workflow que aparecerá en la pestaña Actions de GitHub
+name: QA Framework Tests
+
+# Define los eventos que disparan este workflow
 on:
+  # Se dispara cuando hay un push a las ramas main o develop
   push:
-    branches: [ main, master ]
+    branches: [main, develop]
+  # Se dispara cuando se abre o actualiza un Pull Request hacia main o develop
   pull_request:
-    branches: [ main, master ]
+    branches: [main, develop]
+  # Permite ejecutar el workflow manualmente desde la interfaz de GitHub
+  workflow_dispatch:
+
+# Permisos necesarios para que peaceiris pueda escribir en la rama gh-pages
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Define los trabajos o jobs que se van a ejecutar
 jobs:
   test:
-    timeout-minutes: 60
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-    - name: Install dependencies
-      run: npm ci
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-    - name: Run Playwright tests
-      run: npx playwright test
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Correr suite completa (UI + API + DB)
+        run: docker compose -f docker/docker-compose.yml -f docker/docker-compose.ci.yml up --build --exit-code-from framework
+
+      - name: Corregir permisos de la carpeta allure-results
+        if: always()
+        run: |
+          # Otorga permisos de escritura al usuario actual del runner
+          sudo chown -R $(id -u):$(id -g) allure-results || true
+          # Muestra los permisos para verificar
+          ls -la allure-results | head -5
+
+      - name: Subir resultados de Allure como artefacto
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results
+          retention-days: 15
+
+      - name: Checkout rama gh-pages para historial
+        if: always()
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages-branch
+          fetch-depth: 0
+        continue-on-error: true
+
+      - name: Generar reporte Allure con historial
+        if: always()
+        run: |
+          # Crea una carpeta de trabajo nueva (con permisos del usuario del runner)
+          mkdir -p allure-work
+          # Copia los resultados de Allure a la carpeta de trabajo
+          cp -r allure-results/* allure-work/
+          # Si existe el historial de la ejecución anterior, lo copia dentro de allure-work
+          if [ -d "gh-pages-branch/history" ]; then
+            mkdir -p allure-work/history
+            cp -r gh-pages-branch/history/* allure-work/history/
+          fi
+          # Descarga el CLI oficial de Allure (versión 2.30.0)
+          wget https://github.com/allure-framework/allure2/releases/download/2.30.0/allure-2.30.0.tgz
+          # Descomprime el archivo descargado
+          tar -xzf allure-2.30.0.tgz
+          # Genera el reporte limpio en la carpeta allure-report
+          ./allure-2.30.0/bin/allure generate allure-work -o allure-report --clean
+          # Asegura que la carpeta allure-report exista y tenga un index.html
+          ls -la allure-report/
+
+      - name: Publicar en GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./allure-report
+          keep_files: false
+          # Opcional pero recomendado: forzar la publicación aunque exista la rama
+          force_orphan: false
+
+      - name: Apagar entorno
+        if: always()
+        run: docker compose -f docker/docker-compose.yml -f docker/docker-compose.ci.yml down -v
