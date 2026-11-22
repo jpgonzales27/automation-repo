@@ -1,0 +1,31 @@
+
+npm init playwright@latest
+npx playwright test
+npx playwright show-report
+npx playwright test --ui
+
+npm install --save-dev allure
+npm install --save-dev @playwright/test allure-playwright
+
+In the playwright.config.ts file, add Allure Playwright as a reporter.
+
+export default defineConfig({
+  // ...
+  reporter: [["line"], ["allure-playwright"]],
+});
+
+npx playwright test
+
+npx allure generate
+npx allure serve
+
+
+npm install -D dotenv
+
+npm install -D @types/node
+
+npm install -D allure-commandline
+
+npm test
+npm run report:generate
+npm run report:open
