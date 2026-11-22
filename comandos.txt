@@ -46,3 +46,5 @@ http://localhost:9966/petclinic/api
 
 npx playwright codegen [url]
 npx playwright codegen http://localhost:8080
+
+npm install -D zod
