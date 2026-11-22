@@ -44,10 +44,36 @@ services:
       petclinic-api:
         condition: service_healthy
     environment:
-      # Esta URL la usa el navegador (en tu máquina), no el contenedor: debe ser localhost
-      REST_API_URL: http://localhost:9966/petclinic/api/
+      # Esta URL la usa el NAVEGADOR (no el contenedor de la UI).
+      # El navegador de Playwright corre dentro del contenedor "framework",
+      # donde "petclinic-api" se resuelve por el DNS de la red de Docker.
+      # Para abrir la UI desde tu navegador local, agrega en el archivo hosts:
+      #   127.0.0.1 petclinic-api
+      REST_API_URL: http://petclinic-api:9966/petclinic/api/
     ports:
       - "8080:8080"
+
+  framework:
+    build:
+      context: ..            # El Dockerfile y el código del framework están en la carpeta padre
+      dockerfile: Dockerfile
+    image: qa-framework:latest
+    container_name: qa-framework
+    depends_on:
+      petclinic-api:
+        condition: service_healthy
+      petclinic-ui:
+        condition: service_started
+    environment:
+      BASE_URL: http://petclinic-ui:8080/
+      API_BASE_URL: http://petclinic-api:9966/petclinic/api
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: petclinic
+      DB_USER: petclinic_user
+      DB_PASSWORD: changeme
+    volumes:
+      - ../allure-results:/app/allure-results
 
 volumes:
   petclinic-data:

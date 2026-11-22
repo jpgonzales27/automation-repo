@@ -8,3 +8,8 @@ allure-report
 .env.*
 !.env.example
 docker
+
+# Archivos de entorno (se inyectan por variables en docker-compose)
+.env
+.env.dev
+.env.qa

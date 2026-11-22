@@ -55,3 +55,8 @@ npm install -D @types/pg
 npx playwright test --grep @ui
 npx playwright test --grep @api
 npx playwright test --grep @db
+
+
+docker build -t qa-framework:latest .
+docker images | grep qa-framework
+docker compose logs -f frameworkS
