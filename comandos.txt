@@ -48,3 +48,10 @@ npx playwright codegen [url]
 npx playwright codegen http://localhost:8080
 
 npm install -D zod
+
+npm install pg
+npm install -D @types/pg
+
+npx playwright test --grep @ui
+npx playwright test --grep @api
+npx playwright test --grep @db
